@@ -13,3 +13,6 @@ class Template():
         self.notAfter = _notAfter
         self.principals = _principals
         self.extensions = _extensions
+
+    def __str__(self):
+        return self.name
