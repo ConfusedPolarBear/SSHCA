@@ -48,7 +48,7 @@ def signRaw(user, allowed, notAfter, principalsList, extensionsList, pubkey):
     # convert [ 'principal1', 'principal2' ] to principal1,principal2
     principals = ''
     for i in principalsList:
-        clean = sanitize(i)
+        clean = i.replace('%u', user)
         principals += clean + ','
     principals = principals[:-1]        # trim trailing comma
 
@@ -84,6 +84,15 @@ def cleanCert(raw):
     # remove the filename
     parts = raw.split(' ')
     return parts[0] + ' ' + parts[1]
+
+def fingerprint(contents):
+    with tempfile.NamedTemporaryFile() as temp:
+        temp.file.write(contents.encode('utf-8'))
+        temp.file.seek(0)
+
+        # returns "256 SHA256:DEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEFABC no comment (ED25519)"
+        fpr = run(['ssh-keygen', '-l', '-f', temp.name])['stdout']
+        return fpr.split(' ')[1]
 
 def testAgent():
     return run(['ssh-add', '-l'])
@@ -183,7 +192,6 @@ def parseCertificateByName(filename):
             #print(f'Set list to {list}')
 
     parsed = Certificate(algorithm, type, publicKey, signingKey, identity, serial, notBefore, notAfter, principals, criticalOptions, extensions, output)
-    # print(parsed)
 
     return parsed
 

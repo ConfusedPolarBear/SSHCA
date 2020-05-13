@@ -33,7 +33,9 @@ def loggedIn():
             end   = auth.find('\n', start)
             key   = auth[start:end]
 
-            keys.append(key)
+            fingerprint = sshkeygen.fingerprint(key)
+
+            keys.append(f'{key} {fingerprint}')
 
     return keys
 
@@ -58,6 +60,7 @@ def getFromList(items, initialPrompt, default):
     if length == 1:
         return items[0]
 
+    print()
     print(initialPrompt)
 
     for i in range(length):
@@ -78,7 +81,9 @@ def getFromList(items, initialPrompt, default):
             print()
 
 def getPublicKey():
-    return getFromList(loggedIn(), 'A key could not be automatically selected for signing. Available options:', 0)
+    # strip off the fingerprint
+    raw = getFromList(loggedIn(), 'A key could not be automatically selected for signing. Available options:', 0).split(' ')
+    return raw[0] + ' ' + raw[1]
 
 def main():
     checkAgent()
@@ -86,17 +91,20 @@ def main():
 
     print(f'signing key {pubkey}')
 
-    templates.append(Template('default', ['debian'], '1d', [ 'main' ]))
+    templates.append(Template('default', ['debian'], '1d', [ '%u-main' ]))
     templates.append(Template('secure', ['root', 'debian'], '1h', [ 'secure' ], [ 'clear', 'permit-pty', 'source-address=10.4.1.0/24' ]))
 
     chosen = getFromList(templates, 'Pick certificate template to use', 0)
 
     username = sshkeygen.getUsername()
     cert = sshkeygen.sign(chosen, username, pubkey)
+    audit = sshkeygen.parseCertificate(cert)
     width = shutil.get_terminal_size().columns
 
     print('+-' * int(width / 2))
     print(cert)
+    print('+-' * int(width / 2))
+    print(audit.toJSON())
     print('+-' * int(width / 2))
 
 if __name__ == '__main__':
