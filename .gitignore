@@ -1,6 +1,8 @@
-# CA public keys
+# CA public keys and user config files
 *.pub
 *.swp
+config.ini
+templates.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

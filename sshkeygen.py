@@ -14,17 +14,28 @@ import datetime as dt
 import dateutil.parser as dtp
 from certificate import Certificate
 
+isDebug = False
+
+def setDebug(_debug):
+    global isDebug
+    isDebug = _debug
+    debug('Debug mode enabled')
+
+def debug(msg):
+    if isDebug:
+        print(msg)
+
 def sanitize(raw):
     return re.sub('[^A-Za-z0-9]', '', raw)
 
 def run(args):
-    print(f'\nRUNNING NEW PROGRAM {args}')
+    debug(f'\nRUNNING NEW PROGRAM {args}')
     process = subprocess.run(args, capture_output = True)
     out = process.stdout.decode('utf-8')
     err = process.stderr.decode('utf-8')
 
-    print(f'    stdout: {out}')
-    print(f'    stderr: {err}')
+    debug(f'    stdout:\n{out}')
+    debug(f'    stderr:\n{err}')
 
     return {
         'process': process,
@@ -32,10 +43,10 @@ def run(args):
         'stderr': err
     }
 
-def sign(template, username, publicKey):
-    return signRaw(username, template.allowed, template.notAfter, template.principals, template.extensions, publicKey)
+def sign(template, username, publicKey, serial):
+    return signRaw(username, template.allowed, template.notAfter, template.principals, template.extensions, publicKey, serial)
 
-def signRaw(user, allowed, notAfter, principalsList, extensionsList, pubkey):
+def signRaw(user, allowed, notAfter, principalsList, extensionsList, pubkey, serial):
     if (user not in allowed) and ('*' not in allowed):
         raise Exception(f'User {user} is not allowed to use this template')
 
@@ -52,7 +63,7 @@ def signRaw(user, allowed, notAfter, principalsList, extensionsList, pubkey):
         principals += clean + ','
     principals = principals[:-1]        # trim trailing comma
 
-    args = ['ssh-keygen', '-U', '-s', 'ca.pub', '-I', identity, '-V', notAfter, '-n', principals]
+    args = ['ssh-keygen', '-U', '-s', 'ca.pub', '-I', identity, '-V', notAfter, '-n', principals, '-z', str(serial)]
 
     # convert [ 'extension', 'extension2' ] to -O extension -O extension2
     for i in extensionsList:
@@ -189,7 +200,6 @@ def parseCertificateByName(filename):
 
         elif line.startswith('Principals') or line.startswith('Critical Options') or line.startswith('Extensions'):
             list = line.split(':')[0].lower()
-            #print(f'Set list to {list}')
 
     parsed = Certificate(algorithm, type, publicKey, signingKey, identity, serial, notBefore, notAfter, principals, criticalOptions, extensions, output)
 
@@ -204,4 +214,4 @@ if __name__ == '__main__':
     # print(f'parsing certificate {cert}')
 
     ret = parseCertificate(cert)
-    print(ret)
+    print(ret.toJSON())

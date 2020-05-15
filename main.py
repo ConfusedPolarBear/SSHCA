@@ -6,17 +6,30 @@
 import os, pwd, sys, shutil
 import tempfile
 import jsonpickle
+from configparser import ConfigParser
 
 import sshkeygen
 from templates import Template
 
 SSHTEMP_PREFIX='sshauth'
 
+rawConfig = ConfigParser()
+config = ConfigParser()
+
 templates = []
+isDebug = False
 
 def abort(msg):
     print(f'FATAL: {msg}')
     exit(1)
+
+def debug(msg):
+    if isDebug:
+        print(msg)
+
+# reinventing the wheel a bit but only because python's bool() function is *advanced* stupid
+def toBool(string):
+    return string.lower() in ('True', 'true')
 
 def loggedIn():
     keys = []
@@ -47,12 +60,12 @@ def checkAgent():
 
     # Check if the agent is running
     if err.find('Error connecting') != -1:
-        print(f'ssh-add output: {err}')
+        debug(f'ssh-add output: {err}')
         abort('Cannot connect to ssh-agent, start it with \'eval `ssh-agent`\'')
 
     # Check for identities
     elif len(out) <= 20:
-        print(f'ssh-add output: {out}')
+        debug(f'ssh-add output: {out}')
         abort('ssh-agent does not appear to have any identities')
 
 def getFromList(items, initialPrompt, default):
@@ -97,33 +110,65 @@ def loadTemplates():
             open('templates.json', 'w').write(raw)
 
             abort('No templates have been defined, a sample file was created')
-        else:
-            print('loaded file')
 
         return jsonpickle.decode(raw)
 
-def main():
+def load():
     try:
-        templates = loadTemplates()
+        templates.clear()
+        for i in loadTemplates():
+            templates.append(i)
     except Exception as e:
         abort(f'Failed to read templates file. Error: {e}')
+
+    rawConfig.read('config.ini')
+    
+    if not rawConfig.has_section('main'):
+        rawConfig.add_section('main')
+
+    # what is scoping in python
+    global config
+    global isDebug
+
+    config = rawConfig['main']
+    isDebug = toBool(config.get('debug', fallback='False'))
+    sshkeygen.setDebug(isDebug)
+
+    rawConfig.set(config.name, 'debug', str(isDebug))
+    save()
+
+def save():
+    with open('config.ini', 'w') as f:
+        rawConfig.write(f)
+
+def getSerial():
+    serial = int(config.get('serial', fallback='0'))
+    serial = serial + 1
+
+    rawConfig.set(config.name, 'serial', str(serial))
+
+    save()
+
+    return serial
+
+def main():
+    load()
 
     checkAgent()
     pubkey = getPublicKey()
 
-    print(f'signing key {pubkey}')
+    debug(f'signing key {pubkey}')
 
     chosen = getFromList(templates, 'Pick certificate template to use', 0)
 
     username = sshkeygen.getUsername()
-    cert = sshkeygen.sign(chosen, username, pubkey)
+    cert = sshkeygen.sign(chosen, username, pubkey, getSerial())
     audit = sshkeygen.parseCertificate(cert)
     width = shutil.get_terminal_size().columns
 
+    print()
     print('+-' * int(width / 2))
     print(cert)
-    print('+-' * int(width / 2))
-    print(audit.toJSON())
     print('+-' * int(width / 2))
 
 if __name__ == '__main__':
