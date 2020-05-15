@@ -11,3 +11,4 @@ echo "Generating CA key to sign host keys"
 ssh-keygen -t ed25519 -C "Host CA" -f "$dest/host"
 
 cp "$dest/ca.pub" ./
+cp "$dest/host.pub" ./
