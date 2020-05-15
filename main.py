@@ -5,6 +5,7 @@
 
 import os, pwd, sys, shutil
 import tempfile
+import jsonpickle
 
 import sshkeygen
 from templates import Template
@@ -85,14 +86,32 @@ def getPublicKey():
     raw = getFromList(loggedIn(), 'A key could not be automatically selected for signing. Available options:', 0).split(' ')
     return raw[0] + ' ' + raw[1]
 
+def loadTemplates():
+    with open('templates.json', 'a+') as f:
+        f.seek(0)
+        raw = f.read()
+        if raw == '':
+            sample = [ Template('example', [ 'username1', 'username2' ], '24h', [ 'principal1', 'principal2' ]) ]
+            raw = jsonpickle.encode(sample)
+
+            open('templates.json', 'w').write(raw)
+
+            abort('No templates have been defined, a sample file was created')
+        else:
+            print('loaded file')
+
+        return jsonpickle.decode(raw)
+
 def main():
+    try:
+        templates = loadTemplates()
+    except Exception as e:
+        abort(f'Failed to read templates file. Error: {e}')
+
     checkAgent()
     pubkey = getPublicKey()
 
     print(f'signing key {pubkey}')
-
-    templates.append(Template('default', ['debian'], '1d', [ '%u-main' ]))
-    templates.append(Template('secure', ['root', 'debian'], '1h', [ 'secure' ], [ 'clear', 'permit-pty', 'source-address=10.4.1.0/24' ]))
 
     chosen = getFromList(templates, 'Pick certificate template to use', 0)
 
