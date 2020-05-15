@@ -1,3 +1,6 @@
+# Copyright 2020 Matt Montgomery
+# License: AGPLv3
+
 import datetime as dt
 import base64
 

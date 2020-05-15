@@ -1,3 +1,6 @@
+# Copyright 2020 Matt Montgomery
+# License: AGPLv3
+
 import unittest
 
 import dateutil.parser

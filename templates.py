@@ -1,5 +1,7 @@
-# TODO: add doc strings
+# Copyright 2020 Matt Montgomery
+# License: AGPLv3
 
+# TODO: add doc strings
 class Template():
     name = ''
     allowed = []
