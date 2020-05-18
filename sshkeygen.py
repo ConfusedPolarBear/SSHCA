@@ -1,7 +1,6 @@
 # Copyright 2020 Matt Montgomery
 # License: AGPLv3
 
-# TODO: unit test certificate parser
 # TODO: add filename sanitization to parseCertificateByName
 
 import os, pwd

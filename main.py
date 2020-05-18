@@ -6,6 +6,7 @@
 import os, pwd, sys, shutil
 import tempfile
 import jsonpickle
+import syslog
 from configparser import ConfigParser
 
 import sshkeygen
@@ -72,6 +73,7 @@ def getFromList(items, initialPrompt, default):
     length = len(items)
 
     if length == 1:
+        print(f'Autoselecting {items[0]}')
         return items[0]
 
     print()
@@ -163,7 +165,11 @@ def main():
 
     username = sshkeygen.getUsername()
     cert = sshkeygen.sign(chosen, username, pubkey, getSerial())
-    audit = sshkeygen.parseCertificate(cert)
+
+    audit = sshkeygen.parseCertificate(cert).toJSON()
+    syslog.openlog('sshca')
+    syslog.syslog(audit)
+
     width = shutil.get_terminal_size().columns
 
     print()
