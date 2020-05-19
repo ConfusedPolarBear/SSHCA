@@ -36,3 +36,5 @@ ssh-keygen -U -s host.pub -I "$host" -V "$valid" -n "$host" -h "$file"
 echo Certificate created
 echo
 cat "$(echo $file | sed 's/.pub/-cert.pub/g')" | cut -d " " -f -2
+
+echo Unload Host CA key with: ssh-add -d host.pub
