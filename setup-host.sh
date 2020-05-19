@@ -29,10 +29,13 @@ if ! grep -q HostCertificate "$CONFIG"; then
     echo "[*] Backed up $CONFIG as $backup"
     cp "$CONFIG" "$backup"
 
+    # enable ed25519-cert hostkey type
+    sed -i -E "s/(HostKey.*)/\\1,ssh-ed25519-cert-v01@openssh.com/g" /etc/ssh/sshd_config
+
     cat >> "$CONFIG" << EOF
 
 # ========== begin sshca configuration ==========
-# HostCertificate $CERTIFICATE
+HostCertificate $CERTIFICATE
 TrustedUserCAKeys /etc/ssh/ca.pub
 AuthorizedPrincipalsFile /etc/ssh/principals/%u
 EOF
