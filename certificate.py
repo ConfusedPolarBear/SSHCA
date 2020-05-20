@@ -16,6 +16,7 @@ class Certificate():
     principals = []
     criticalOptions = []
     extensions = []
+    client = ''
     raw = ''
 
     def __init__(self, algorithm, type, publicKey, signer, identity, serial, notBefore, notAfter, principals, critical, extensions, raw):

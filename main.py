@@ -166,7 +166,10 @@ def main():
     username = sshkeygen.getUsername()
     cert = sshkeygen.sign(chosen, username, pubkey, getSerial())
 
-    audit = sshkeygen.parseCertificate(cert).toJSON()
+    rawAudit = sshkeygen.parseCertificate(cert)
+    rawAudit.client = os.getenv('SSH_CONNECTION')    # get SSH client information
+
+    audit = rawAudit.toJSON()
     syslog.openlog('sshca')
     syslog.syslog(audit)
 

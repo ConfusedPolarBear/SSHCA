@@ -53,5 +53,6 @@ echo "[*] SSH public keys"
 find /etc/ssh/ -iname '*ssh_host*pub' -not -iname '*cert*' -exec cat {} \;
 find /etc/ssh/ -iname '*ssh_host*pub' -not -iname '*cert*' -exec ssh-keygen -l -f {} \;
 
+touch "$CERTIFICATE"
 echo
 echo "[*] Host certificate path: $CERTIFICATE"
