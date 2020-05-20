@@ -1,20 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 
-if [[ $# -lt 2 ]]; then
-    echo "Usage: $0 hostname notAfter"
+if [[ $# -lt 3 ]]; then
+    echo "Usage: $0 hostname notAfter publicKey"
     exit 1
 fi
 
 host="$1"
 valid="+$2"
+key="$3"
+
 file="/dev/shm/host.pub"
+echo "$key" > "$file"
 
 echo "Hostname:    $host"
 echo "Validity:    $valid"
 echo "Public key:  $(cat "$file")"
 echo "Fingerprint: $(ssh-keygen -lf "$file")"
-echo "Filename:    $file"
 
 echo
 read -n 1 -p "Are you sure? " sure
