@@ -33,7 +33,7 @@ case "$sure" in
         ;;
 esac
 
-ssh-keygen -U -s host.pub -I "$host" -V "$valid" -n "$host" -h "$file"
+ssh-keygen -U -s config/host.pub -I "$host" -V "$valid" -n "$host" -h "$file"
 
 echo Certificate created
 echo

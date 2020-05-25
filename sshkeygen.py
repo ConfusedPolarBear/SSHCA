@@ -27,7 +27,22 @@ def debug(msg):
 def sanitize(raw):
     return re.sub('[^A-Za-z0-9]', '', raw)
 
-def run(args):
+def run(args, switchUser = False):
+    if switchUser:
+        socket = ''
+        with open('/tmp/sshca-socket', 'r') as f:
+            socket = f.read()
+
+        socket = socket.replace('\n', '')
+
+        os.putenv('SSH_AUTH_SOCK', socket)
+        debug('switching user')
+        sudo = ['sudo', '-u', 'sshca', '--preserve-env=SSH_AUTH_SOCK']
+        sudo.reverse()
+
+        for i in sudo:
+            args.insert(0, i)
+
     debug(f'\nRUNNING NEW PROGRAM {args}')
     process = subprocess.run(args, capture_output = True)
     out = process.stdout.decode('utf-8')
@@ -62,7 +77,7 @@ def signRaw(user, allowed, notAfter, principalsList, extensionsList, pubkey, ser
         principals += clean + ','
     principals = principals[:-1]        # trim trailing comma
 
-    args = ['ssh-keygen', '-U', '-s', 'ca.pub', '-I', identity, '-V', notAfter, '-n', principals, '-z', str(serial)]
+    args = ['ssh-keygen', '-U', '-s', 'config/ca.pub', '-I', identity, '-V', notAfter, '-n', principals, '-z', str(serial)]
 
     # convert [ 'extension', 'extension2' ] to -O extension -O extension2
     for i in extensionsList:
@@ -78,8 +93,12 @@ def signRaw(user, allowed, notAfter, principalsList, extensionsList, pubkey, ser
 
         signed = temp.name + '-cert.pub'
 
+        run(['chmod', 'a+r', temp.name])
+        run(['file', temp.name])
+        run(['file', temp.name], True)
+
         args.append(temp.name)
-        out = run(args)
+        out = run(args, True)
 
         if out['process'].returncode != 0:
             error = out['stderr']
@@ -87,7 +106,7 @@ def signRaw(user, allowed, notAfter, principalsList, extensionsList, pubkey, ser
 
     with open(signed, 'r') as f:
         contents = f.read()
-        os.remove(signed)
+        run(['rm', signed], True)
         return cleanCert(contents)
 
 def cleanCert(raw):
@@ -105,7 +124,7 @@ def fingerprint(contents):
         return fpr.split(' ')[1]
 
 def testAgent():
-    return run(['ssh-add', '-l'])
+    return run(['ssh-add', '-l'], True)
 
 def getUsername():
     return pwd.getpwuid(os.getuid()).pw_name

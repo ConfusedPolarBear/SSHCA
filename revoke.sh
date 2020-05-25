@@ -11,15 +11,15 @@ publicKey=""
 
 # check if a second argument was provided
 if [ -z "${2+x}" ]; then
-	publicKey="ca.pub"
+	publicKey="config/ca.pub"
 else
 	publicKey="$2"
 fi
 
 echo "[+] Revoking $revoke with public key $publicKey"
-echo "$revoke" | ssh-keygen -s "$publicKey" -f revoked.krl -u -k -
+echo "$revoke" | ssh-keygen -s "$publicKey" -f config/revoked.krl -u -k -
 
-echo "$revoke" >> revoked-log.txt
+echo "$revoke" >> config/revoked-log.txt
 logger -t sshca "$USER revoked \"$revoke\" with public key \"$publicKey\""
 
 echo "[+] Successfully revoked $revoke"

@@ -1,0 +1,2 @@
+# SSHCA policy to allow any user to sign certificates
+ALL	ALL=(sshca) NOPASSWD: /usr/bin/ssh-keygen -U -s* env_keep+="SSH_AUTH_SOCK" 

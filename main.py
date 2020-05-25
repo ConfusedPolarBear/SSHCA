@@ -102,14 +102,14 @@ def getPublicKey():
     return raw[0] + ' ' + raw[1]
 
 def loadTemplates():
-    with open('templates.json', 'a+') as f:
+    with open('config/templates.json', 'a+') as f:
         f.seek(0)
         raw = f.read()
         if raw == '':
             sample = [ Template('example', [ 'username1', 'username2' ], '24h', [ 'principal1', 'principal2' ]) ]
             raw = jsonpickle.encode(sample)
 
-            open('templates.json', 'w').write(raw)
+            open('config/templates.json', 'w').write(raw)
 
             abort('No templates have been defined, a sample file was created')
 
@@ -123,7 +123,7 @@ def load():
     except Exception as e:
         abort(f'Failed to read templates file. Error: {e}')
 
-    rawConfig.read('config.ini')
+    rawConfig.read('config/config.ini')
     
     if not rawConfig.has_section('main'):
         rawConfig.add_section('main')
@@ -133,14 +133,16 @@ def load():
     global isDebug
 
     config = rawConfig['main']
+    print('is debug' + config.get('debug'))
     isDebug = toBool(config.get('debug', fallback='False'))
+    print('is debug' + str(isDebug))
     sshkeygen.setDebug(isDebug)
 
     rawConfig.set(config.name, 'debug', str(isDebug))
     save()
 
 def save():
-    with open('config.ini', 'w') as f:
+    with open('config/config.ini', 'w') as f:
         rawConfig.write(f)
 
 def getSerial():
